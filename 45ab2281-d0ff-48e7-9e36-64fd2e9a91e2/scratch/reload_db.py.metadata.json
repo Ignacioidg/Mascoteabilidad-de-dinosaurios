@@ -1,0 +1,4 @@
+{
+  "summary": "Script scratch para regenerar seeds.sql y re-inicializar la BD con hashes válidos de bcrypt.",
+  "updatedAt": "2026-08-24T12:52:36.242472500Z"
+}
