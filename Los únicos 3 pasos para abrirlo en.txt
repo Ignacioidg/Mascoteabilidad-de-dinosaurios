@@ -1,0 +1,16 @@
+Los únicos 3 pasos para abrirlo en cualquier otra computadora
+Quien clone tu repositorio de GitHub (tu compañero, tú en otra PC o el profesor) solo debe hacer esto:
+
+bash
+
+
+# 1. Clonar el repositorio
+git clone <URL-DE-TU-REPOSITORIO>
+cd dinomascota
+# 2. Instalar dependencias de Python (tarda 10 segundos)
+pip install -r backend/requirements.txt
+# 3. Iniciar la aplicación
+python -m uvicorn backend.app:app --port 8000
+Y al abrir http://localhost:8000 en el navegador, tendrá acceso completo al Login con Hash, los KPIs, la navegación Drill-Down / Drill-Up (3 niveles), la Semaforización y los Gráficos interactivos de Chart.js.
+
+(Ya te dejé configurado el archivo .gitignore dentro del proyecto para que al subirlo a GitHub no suba archivos basura ni temporales).
