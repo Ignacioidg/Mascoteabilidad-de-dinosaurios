@@ -272,33 +272,20 @@
     }
 
     // =========================================================================
-    // =========================================================================
     // COMPONENTE: MODAL DE FICHA TÉCNICA (DETALLE DEL DINOSAURIO)
     // =========================================================================
     function DinoModal({ dinoId, onClose, onSelectForCompare }) {
       const [dino, setDino] = useState(null);
       const [loading, setLoading] = useState(true);
-      const [render3d, setRender3d] = useState(null);
 
       useEffect(() => {
         if (!dinoId) return;
         setLoading(true);
-        setRender3d(null);
         fetch(`${API_BASE}/api/stats/dinosaurio/${dinoId}`)
           .then(res => res.json())
           .then(data => {
             setDino(data);
             setLoading(false);
-            if (data && data.nombre) {
-              fetch(`${API_BASE}/api/dinos/render3d/${encodeURIComponent(data.nombre)}`)
-                .then(r => r.json())
-                .then(rdata => {
-                  if (rdata && rdata.has_render_3d && rdata.render_3d_url) {
-                    setRender3d(rdata.render_3d_url);
-                  }
-                })
-                .catch(() => {});
-            }
           })
           .catch(err => {
             console.error(err);
@@ -367,38 +354,6 @@
                     </div>
                     <p className="text-xs leading-relaxed">{dino.semaforo_justificacion}</p>
                   </div>
-
-                  {/* Render 3D Vivo - Franquicia Jurásica (Aparece ÚNICAMENTE si existe Modelo 3D) */}
-                  {render3d && (
-                    <div className="p-4 bg-gradient-to-r from-amber-950/30 via-slate-900/60 to-emerald-950/30 rounded-2xl border border-amber-500/30 shadow-lg relative overflow-hidden">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 animate-pulse"></span>
-                          <h4 className="text-xs font-black text-amber-300 uppercase tracking-wider flex items-center gap-1.5">
-                            <i className="fa-solid fa-cubes"></i>
-                            <span>Modelo 3D Oficial &bull; Jurassic Universe</span>
-                          </h4>
-                        </div>
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1">
-                          <i className="fa-solid fa-vr-cardboard text-[9px]"></i>
-                          <span>Render Vivo</span>
-                        </span>
-                      </div>
-                      
-                      <div className="relative w-full h-52 sm:h-60 bg-slate-950/90 rounded-xl overflow-hidden border border-slate-800 flex items-center justify-center group p-3">
-                        <img
-                          src={render3d}
-                          alt={`Modelo 3D de ${dino.nombre}`}
-                          className="max-h-full max-w-full object-contain transition-transform duration-500 group-hover:scale-105 drop-shadow-[0_12px_24px_rgba(0,0,0,0.9)]"
-                          loading="lazy"
-                        />
-                        <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-sm px-2 py-0.5 rounded-md text-[9px] text-slate-300 border border-slate-700/60 flex items-center gap-1">
-                          <i className="fa-solid fa-shield text-amber-400"></i>
-                          <span>Jurassic Park Wiki API</span>
-                        </div>
-                      </div>
-                    </div>
-                  )}
 
                   {/* 4 Entidades Relacionadas en SQL */}
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

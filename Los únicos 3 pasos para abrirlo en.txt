@@ -1,16 +1,23 @@
 Los únicos 3 pasos para abrirlo en cualquier otra computadora
 Quien clone tu repositorio de GitHub (tu compañero, tú en otra PC o el profesor) solo debe hacer esto:
 
-bash
-
-
 # 1. Clonar el repositorio
 git clone <URL-DE-TU-REPOSITORIO>
-cd dinomascota
+cd Mascoteabilidad-de-dinosaurios
+
 # 2. Instalar dependencias de Python (tarda 10 segundos)
 pip install -r backend/requirements.txt
+
 # 3. Iniciar la aplicación
 python -m uvicorn backend.app:app --port 8000
-Y al abrir http://localhost:8000 en el navegador, tendrá acceso completo al Login con Hash, los KPIs, la navegación Drill-Down / Drill-Up (3 niveles), la Semaforización y los Gráficos interactivos de Chart.js.
 
-(Ya te dejé configurado el archivo .gitignore dentro del proyecto para que al subirlo a GitHub no suba archivos basura ni temporales).
+Y al abrir http://localhost:8000 en el navegador, tendrá acceso completo a:
+- Login con validación de Hash Bcrypt en SQLite (usuarios: admin/admin123, profesor/uai2026, alumno/dino123).
+- Dashboard con KPIs y gráficos estadísticos de Chart.js.
+- Navegación Drill-Down / Drill-Up (3 niveles: Períodos -> Hábitats -> Especies).
+- Semaforización visual de 3 estados (Verde / Amarillo / Rojo).
+- Catálogo y Buscador avanzado multifiltro con ordenamiento dinámico.
+- Comparador cara a cara (Head-to-Head) entre dinosaurios.
+- Ficha técnica completa de más de 50 especies con paleoarte e indicadores biométricos.
+
+(Para sincronizar o continuar la sesión de Antigravity en otra máquina, solo copia la carpeta 62d76597-278b-4efe-a133-2e345d8af54b dentro de tu .gemini/antigravity/brain/).

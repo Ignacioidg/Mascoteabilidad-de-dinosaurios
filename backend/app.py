@@ -38,9 +38,8 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-# Cache en memoria de resoluciones de imágenes y renders 3D
+# Cache en memoria de resoluciones de imágenes
 IMAGE_CACHE: Dict[str, Any] = {}
-RENDER_3D_CACHE: Dict[str, Any] = {}
 
 # -------------------------------------------------------------
 # 1. AUTENTICACIÓN (LOGIN)
@@ -110,34 +109,6 @@ def get_dino_image(nombre: str):
     IMAGE_CACHE[clean_key] = fallback_data
     return fallback_data
 
-@app.get("/api/dinos/render3d/{nombre}")
-def get_dino_render_3d(nombre: str):
-    """
-    Consulta la API de Jurassic Park Fandom Wiki bajo demanda para obtener el modelo 3D / Render vivo.
-    Si no posee render 3D o es un placeholder genérico, retorna has_render_3d: False.
-    """
-    clean_key = nombre.strip().lower()
-    if clean_key in RENDER_3D_CACHE:
-        return RENDER_3D_CACHE[clean_key]
-        
-    render_url = fetch_jurassic_park_image(nombre)
-    if render_url:
-        res = {
-            "has_render_3d": True,
-            "render_3d_url": render_url,
-            "nombre": nombre,
-            "source": "jurassic_park_wiki"
-        }
-    else:
-        res = {
-            "has_render_3d": False,
-            "render_3d_url": None,
-            "nombre": nombre,
-            "source": "none"
-        }
-        
-    RENDER_3D_CACHE[clean_key] = res
-    return res
 
 # -------------------------------------------------------------
 # 3. INDICADORES GLOBALES (KPIS)
