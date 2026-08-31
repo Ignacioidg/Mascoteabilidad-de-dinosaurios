@@ -68,6 +68,7 @@ CREATE TABLE dinosaurios (
     id_habitat INTEGER NOT NULL,
     id_dieta INTEGER NOT NULL,
     imagen_emoji VARCHAR(20) DEFAULT '🦖',
+    imagen_url TEXT,
     observaciones TEXT,
     FOREIGN KEY (id_periodo) REFERENCES periodos(id_periodo) ON DELETE RESTRICT,
     FOREIGN KEY (id_habitat) REFERENCES habitats(id_habitat) ON DELETE RESTRICT,
