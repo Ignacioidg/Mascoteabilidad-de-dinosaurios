@@ -140,7 +140,38 @@ def sync_wikipedia_images(conn: Optional[sqlite3.Connection] = None, force_refre
     if should_close:
         conn.close()
 
-def init_db(force_reload: bool = False):
+def is_db_initialized() -> bool:
+    """Verifica si la base de datos dinomascota.db existe y contiene la tabla usuarios."""
+    if not os.path.exists(DB_PATH):
+        return False
+    try:
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='usuarios'")
+        row = cursor.fetchone()
+        conn.close()
+        return bool(row)
+    except Exception:
+        return False
+
+def execute_query(query: str, params: tuple = ()) -> int:
+    """
+    Ejecuta una consulta SQL de modificación (INSERT, UPDATE, DELETE) y realiza commit.
+    Retorna el ID de la fila insertada o el número de filas afectadas.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(query, params)
+    conn.commit()
+    last_id = cursor.lastrowid
+    conn.close()
+    return last_id
+
+def init_db(force_reload: bool = False, sync_images: bool = False):
+    """
+    Inicializa la base de datos SQLite ejecutando schema.sql y seeds.sql.
+    Este método está diseñado para ser invocado por el script independiente init_database.py.
+    """
     db_exists = os.path.exists(DB_PATH)
     if force_reload or not db_exists:
         conn = get_connection()
@@ -150,13 +181,14 @@ def init_db(force_reload: bool = False):
         with open(SEEDS_PATH, 'r', encoding='utf-8') as f:
             cursor.executescript(f.read())
         conn.commit()
-        print('[DB] Base de datos dinomascota.db inicializada con exito.')
-        sync_wikipedia_images(conn, force_refresh=True)
+        print('[DB] Base de datos dinomascota.db creada y poblada con exito.')
+        if sync_images:
+            sync_wikipedia_images(conn, force_refresh=True)
         conn.close()
     else:
         print('[DB] Base de datos existente encontrada.')
-        # Verificar si hay imágenes pendientes de sincronizar
-        sync_wikipedia_images(force_refresh=False)
+        if sync_images:
+            sync_wikipedia_images(force_refresh=False)
 
 def query_all(query: str, params: tuple = ()) -> List[Dict[str, Any]]:
     conn = get_connection()
@@ -176,4 +208,5 @@ def query_one(query: str, params: tuple = ()) -> Optional[Dict[str, Any]]:
     return dict(row) if row else None
 
 if __name__ == '__main__':
-    init_db(force_reload=True)
+    init_db(force_reload=True, sync_images=False)
+

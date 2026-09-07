@@ -4,11 +4,11 @@
 -- SCRIPT: DML - Inserción de Datos Iniciales (Seeds)
 -- ====================================================================
 
--- 1. Usuarios con contraseña hasheada en bcrypt
-INSERT INTO usuarios (username, password_hash, nombre_completo, rol) VALUES
-('admin', '$2b$12$DlLusyz3tcoVd84NOlOw5edCxUmqQEDK3Ii3ecFWFLHJqukbzRlue', 'Administrador General', 'administrador'),
-('profesor', '$2b$12$Ml5634NeZNmtEUy3n.SKm.AC0Ejb.ONNw2Kcm2FmJ5OeYKLoKq8ny', 'Prof. Titular BD Aplicada', 'docente'),
-('alumno', '$2b$12$Ycu8mokiERLR229882jFEOYx1IWVxQR/0JhYLiOKxe/0cG4ep7h8K', 'Estudiante de Sistemas', 'alumno');
+-- 1. Usuarios con contraseña hasheada en SHA-256 con Salt (cuentas verificadas)
+INSERT INTO usuarios (username, email, password_hash, salt, nombre_completo, rol, verificado) VALUES
+('admin', 'admin@dinomascota.uai', 'sha256$763a3ab98401a0653422e6059cd2b987$2a4e99d6672b011037745f7c5f34316b82a6758f0b05fc471cfdaeca11c901f1', '763a3ab98401a0653422e6059cd2b987', 'Administrador General', 'administrador', 1),
+('profesor', 'profesor@uai.edu.ar', 'sha256$8f91a2b3c4d5e6f7a8b9c0d1e2f3a4b5$e155f44c9b165909d996c822209ed63ec8eee6fb0c7759b9e57877b3dbcb6ecd', '8f91a2b3c4d5e6f7a8b9c0d1e2f3a4b5', 'Prof. Titular BD Aplicada', 'docente', 1),
+('alumno', 'alumno@alumnos.uai.edu.ar', 'sha256$1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d$967b67ca0cda726aca713104867123bd5a69248835d53b4b139f346f2de26cdb', '1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d', 'Estudiante de Sistemas', 'alumno', 1);
 
 -- 2. Períodos Geológicos
 INSERT INTO periodos (id_periodo, nombre, era, millones_anios_inicio, millones_anios_fin, clima_predominante, descripcion) VALUES

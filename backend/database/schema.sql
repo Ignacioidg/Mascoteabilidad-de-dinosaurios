@@ -1,7 +1,7 @@
 -- ====================================================================
 -- PROYECTO: DinoMascota Dashboard
 -- MATERIA: Bases de Datos Aplicada - UAI
--- SCRIPT: DDL - Creación de Esquema de Base de Datos
+-- SCRIPT: DDL - Creación de Esquema de Base de Datos (SQLite)
 -- ====================================================================
 
 DROP TABLE IF EXISTS dinosaurios;
@@ -10,13 +10,20 @@ DROP TABLE IF EXISTS habitats;
 DROP TABLE IF EXISTS periodos;
 DROP TABLE IF EXISTS usuarios;
 
--- 1. Tabla de Usuarios (Autenticación con Hashing Bcrypt)
+-- 1. Tabla de Usuarios (Autenticación SHA-256 con Salt, Verificación de Email y Recuperación)
 CREATE TABLE usuarios (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     username VARCHAR(50) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
+    salt VARCHAR(64),
     nombre_completo VARCHAR(100) NOT NULL,
-    rol VARCHAR(20) DEFAULT 'investigador' CHECK (rol IN ('administrador', 'docente', 'investigador', 'alumno')),
+    rol VARCHAR(20) DEFAULT 'alumno' CHECK (rol IN ('administrador', 'docente', 'investigador', 'alumno')),
+    verificado INTEGER DEFAULT 0 CHECK (verificado IN (0, 1)),
+    codigo_verificacion VARCHAR(10),
+    codigo_expiracion TIMESTAMP,
+    token_recuperacion VARCHAR(10),
+    token_recuperacion_expiracion TIMESTAMP,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -76,6 +83,8 @@ CREATE TABLE dinosaurios (
 );
 
 -- Índices para optimizar las consultas analíticas del Dashboard
+CREATE INDEX idx_usuarios_username ON usuarios(username);
+CREATE INDEX idx_usuarios_email ON usuarios(email);
 CREATE INDEX idx_dinos_periodo ON dinosaurios(id_periodo);
 CREATE INDEX idx_dinos_habitat ON dinosaurios(id_habitat);
 CREATE INDEX idx_dinos_dieta ON dinosaurios(id_dieta);

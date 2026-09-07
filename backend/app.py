@@ -1,28 +1,34 @@
 # -*- coding: utf-8 -*-
 import os
 import json
-import urllib.request
-import bcrypt
-from fastapi import FastAPI, HTTPException, status, Query
+import re
+import secrets
+from datetime import datetime, timedelta
+from typing import Optional, List, Dict, Any
+
+from fastapi import FastAPI, HTTPException, status, Query, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, JSONResponse
-from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
+from pydantic import BaseModel, EmailStr
 
 from backend.database.db import (
-    query_all, query_one, init_db, 
+    query_all, query_one, execute_query, is_db_initialized,
     fetch_wiki_thumbnail, fetch_jurassic_park_image, fetch_dino_best_image,
     sync_wikipedia_images, get_connection
 )
+from backend.services.security import hash_password_sha256, verify_password
+from backend.services.mailer import send_verification_email, send_password_reset_email
 
-# Inicializar Base de Datos SQLite
-init_db()
+# Verificar si la base de datos fue inicializada de forma independiente
+if not is_db_initialized():
+    print("[WARN] ALERTA: dinomascota.db no encontrada o no inicializada.")
+    print("[WARN] Por favor ejecuta 'python init_database.py' antes de utilizar la aplicacion.")
 
 app = FastAPI(
     title="DinoMascota API - Tablero de Control",
     description="Sistema analítico de evaluación de dinosaurios domésticos para Bases de Datos Aplicada (UAI)",
-    version="1.1.0"
+    version="1.2.0"
 )
 
 app.add_middleware(
@@ -33,36 +39,92 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Modelos Pydantic
+# -------------------------------------------------------------
+# MODELOS PYDANTIC
+# -------------------------------------------------------------
 class LoginRequest(BaseModel):
     username: str
     password: str
 
+class RegisterRequest(BaseModel):
+    username: str
+    nombre_completo: str
+    email: str
+    password: str
+    confirm_password: str
+
+class VerifyEmailRequest(BaseModel):
+    email: str
+    code: str
+
+class ResendCodeRequest(BaseModel):
+    email: str
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    code: str
+    new_password: str
+    confirm_password: str
+
+class AdminCreateUserRequest(BaseModel):
+    username: str
+    nombre_completo: str
+    email: str
+    password: str
+    rol: str = "alumno"
+    verificado: bool = True
+
+class AdminUpdateRoleRequest(BaseModel):
+    rol: str
+
 # Cache en memoria de resoluciones de imágenes
 IMAGE_CACHE: Dict[str, Any] = {}
 
+def check_db_ready():
+    if not is_db_initialized():
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="La base de datos no está inicializada. Ejecute 'python init_database.py' en la terminal."
+        )
+
 # -------------------------------------------------------------
-# 1. AUTENTICACIÓN (LOGIN)
+# 1. AUTENTICACIÓN Y GESTIÓN DE USUARIOS
 # -------------------------------------------------------------
 @app.post("/api/auth/login")
 def login(creds: LoginRequest):
-    user = query_one("SELECT * FROM usuarios WHERE username = ?", (creds.username,))
+    check_db_ready()
+    # Buscar por username o email
+    user = query_one(
+        "SELECT * FROM usuarios WHERE LOWER(username) = LOWER(?) OR LOWER(email) = LOWER(?)", 
+        (creds.username.strip(), creds.username.strip())
+    )
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Usuario o contraseña incorrectos"
         )
     
-    # Verificación de contraseña hasheada en Bcrypt (almacenada en SQLite)
-    try:
-        is_valid = bcrypt.checkpw(creds.password.encode('utf-8'), user["password_hash"].encode('utf-8'))
-    except Exception:
-        is_valid = False
-        
+    # Verificación de contraseña (soporta SHA-256 con salt y legacy Bcrypt)
+    is_valid = verify_password(creds.password, user["password_hash"], user.get("salt"))
     if not is_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Usuario o contraseña incorrectos"
+        )
+        
+    # Verificar si la cuenta fue activada por email
+    if user.get("verificado", 1) == 0:
+        return JSONResponse(
+            status_code=status.HTTP_403_FORBIDDEN,
+            content={
+                "status": "unverified",
+                "message": "Tu cuenta aún no ha sido verificada por correo electrónico.",
+                "email": user["email"],
+                "username": user["username"]
+            }
         )
         
     return {
@@ -71,11 +133,302 @@ def login(creds: LoginRequest):
         "user": {
             "id": user["id"],
             "username": user["username"],
+            "email": user["email"],
             "nombre_completo": user["nombre_completo"],
             "rol": user["rol"]
         },
         "token": f"token_{user['id']}_{user['username']}"
     }
+
+@app.post("/api/auth/register")
+def register(data: RegisterRequest):
+    check_db_ready()
+    username = data.username.strip()
+    email = data.email.strip().lower()
+    nombre = data.nombre_completo.strip()
+    password = data.password
+    
+    # Validaciones básicas
+    if len(username) < 3:
+        raise HTTPException(status_code=400, detail="El nombre de usuario debe tener al menos 3 caracteres.")
+    if not re.match(r"^[^@\s]+@[^@\s]+\.[^@\s]+$", email):
+        raise HTTPException(status_code=400, detail="El formato del correo electrónico es inválido.")
+    if len(password) < 4:
+        raise HTTPException(status_code=400, detail="La contraseña debe tener al menos 4 caracteres.")
+    if password != data.confirm_password:
+        raise HTTPException(status_code=400, detail="Las contraseñas no coinciden.")
+        
+    # Validar duplicados
+    existing = query_one("SELECT id FROM usuarios WHERE LOWER(username) = LOWER(?)", (username,))
+    if existing:
+        raise HTTPException(status_code=400, detail="El nombre de usuario ya se encuentra registrado.")
+    existing_mail = query_one("SELECT id FROM usuarios WHERE LOWER(email) = LOWER(?)", (email,))
+    if existing_mail:
+        raise HTTPException(status_code=400, detail="El correo electrónico ya se encuentra registrado.")
+
+    # Hasheo seguro en SHA-256 con salt criptográfico
+    pwd_hash, salt = hash_password_sha256(password)
+    
+    # Generar código de 6 dígitos con expiración de 15 minutos
+    code = str(secrets.randbelow(900000) + 100000)
+    exp = (datetime.now() + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
+    
+    # Insertar en base de datos SQLite (persistencia garantizada)
+    execute_query("""
+        INSERT INTO usuarios (username, email, password_hash, salt, nombre_completo, rol, verificado, codigo_verificacion, codigo_expiracion)
+        VALUES (?, ?, ?, ?, ?, 'alumno', 0, ?, ?)
+    """, (username, email, pwd_hash, salt, nombre, code, exp))
+    
+    # Enviar correo o simular en consola
+    mail_res = send_verification_email(email, username, code)
+    
+    return {
+        "status": "success",
+        "message": "Usuario registrado exitosamente. Te hemos enviado un código de verificación de 6 dígitos a tu casilla.",
+        "email": email,
+        "username": username,
+        "dev_code": mail_res.get("code")
+    }
+
+@app.post("/api/auth/verify-email")
+def verify_email(data: VerifyEmailRequest):
+    check_db_ready()
+    email = data.email.strip().lower()
+    code = data.code.strip()
+    
+    user = query_one("SELECT * FROM usuarios WHERE LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?)", (email, email))
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+        
+    if user.get("verificado") == 1:
+        return {"status": "info", "message": "La cuenta ya se encuentra activa y verificada."}
+        
+    if not user.get("codigo_verificacion") or user["codigo_verificacion"] != code:
+        raise HTTPException(status_code=400, detail="El código de verificación ingresado es incorrecto.")
+        
+    if user.get("codigo_expiracion"):
+        try:
+            exp_date = datetime.strptime(user["codigo_expiracion"], "%Y-%m-%d %H:%M:%S")
+            if datetime.now() > exp_date:
+                raise HTTPException(status_code=400, detail="El código de verificación ha expirado. Solicita uno nuevo.")
+        except ValueError:
+            pass
+            
+    # Marcar cuenta como verificada y limpiar códigos temporales
+    execute_query("""
+        UPDATE usuarios 
+        SET verificado = 1, codigo_verificacion = NULL, codigo_expiracion = NULL 
+        WHERE id = ?
+    """, (user["id"],))
+    
+    return {
+        "status": "success",
+        "message": "¡Cuenta verificada exitosamente! Ya puedes iniciar sesión con tu usuario y contraseña."
+    }
+
+@app.post("/api/auth/resend-code")
+def resend_code(data: ResendCodeRequest):
+    check_db_ready()
+    email = data.email.strip().lower()
+    user = query_one("SELECT * FROM usuarios WHERE LOWER(email) = LOWER(?) OR LOWER(username) = LOWER(?)", (email, email))
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+        
+    if user.get("verificado") == 1:
+        return {"status": "info", "message": "Esta cuenta ya está verificada."}
+        
+    new_code = str(secrets.randbelow(900000) + 100000)
+    new_exp = (datetime.now() + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
+    
+    execute_query("""
+        UPDATE usuarios 
+        SET codigo_verificacion = ?, codigo_expiracion = ? 
+        WHERE id = ?
+    """, (new_code, new_exp, user["id"]))
+    
+    mail_res = send_verification_email(user["email"], user["username"], new_code)
+    
+    return {
+        "status": "success",
+        "message": "Se ha reenviado un nuevo código de 6 dígitos a tu casilla de correo.",
+        "email": user["email"],
+        "dev_code": mail_res.get("code")
+    }
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(data: ForgotPasswordRequest):
+    check_db_ready()
+    email = data.email.strip().lower()
+    user = query_one("SELECT * FROM usuarios WHERE LOWER(email) = LOWER(?)", (email,))
+    if not user:
+        # Por seguridad no revelar si el mail existe, pero dar feedback amigable
+        return {
+            "status": "success",
+            "message": "Si el correo está registrado en el sistema, recibirás un código de recuperación en breve."
+        }
+        
+    recovery_code = str(secrets.randbelow(900000) + 100000)
+    rec_exp = (datetime.now() + timedelta(minutes=15)).strftime("%Y-%m-%d %H:%M:%S")
+    
+    execute_query("""
+        UPDATE usuarios 
+        SET token_recuperacion = ?, token_recuperacion_expiracion = ? 
+        WHERE id = ?
+    """, (recovery_code, rec_exp, user["id"]))
+    
+    mail_res = send_password_reset_email(user["email"], user["username"], recovery_code)
+    
+    return {
+        "status": "success",
+        "message": "Hemos enviado un código de recuperación a tu correo electrónico.",
+        "email": user["email"],
+        "dev_code": mail_res.get("code")
+    }
+
+@app.post("/api/auth/reset-password")
+def reset_password(data: ResetPasswordRequest):
+    check_db_ready()
+    email = data.email.strip().lower()
+    code = data.code.strip()
+    new_pwd = data.new_password
+    
+    if len(new_pwd) < 4:
+        raise HTTPException(status_code=400, detail="La nueva contraseña debe tener al menos 4 caracteres.")
+    if new_pwd != data.confirm_password:
+        raise HTTPException(status_code=400, detail="Las nuevas contraseñas no coinciden.")
+        
+    user = query_one("SELECT * FROM usuarios WHERE LOWER(email) = LOWER(?)", (email,))
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+        
+    if not user.get("token_recuperacion") or user["token_recuperacion"] != code:
+        raise HTTPException(status_code=400, detail="El código de recuperación es incorrecto.")
+        
+    if user.get("token_recuperacion_expiracion"):
+        try:
+            exp_date = datetime.strptime(user["token_recuperacion_expiracion"], "%Y-%m-%d %H:%M:%S")
+            if datetime.now() > exp_date:
+                raise HTTPException(status_code=400, detail="El código de recuperación ha expirado. Solicita uno nuevo.")
+        except ValueError:
+            pass
+            
+    # Hashear la nueva contraseña con SHA-256 y un nuevo salt
+    new_hash, new_salt = hash_password_sha256(new_pwd)
+    
+    execute_query("""
+        UPDATE usuarios 
+        SET password_hash = ?, salt = ?, token_recuperacion = NULL, token_recuperacion_expiracion = NULL, verificado = 1
+        WHERE id = ?
+    """, (new_hash, new_salt, user["id"]))
+    
+    return {
+        "status": "success",
+        "message": "¡Tu contraseña ha sido restablecida exitosamente! Ya puedes iniciar sesión con tu nueva clave."
+    }
+
+# -------------------------------------------------------------
+# 1.1 GESTOR DE USUARIOS PARA ADMINISTRADOR (/api/admin/*)
+# -------------------------------------------------------------
+VALID_ROLES = ["administrador", "docente", "investigador", "alumno"]
+
+@app.get("/api/admin/users")
+def get_all_users():
+    check_db_ready()
+    users = query_all("""
+        SELECT 
+            id, username, email, nombre_completo, rol, verificado, fecha_creacion 
+        FROM usuarios 
+        ORDER BY id ASC
+    """)
+    return {"status": "success", "users": users, "total": len(users)}
+
+@app.post("/api/admin/users")
+def admin_create_user(data: AdminCreateUserRequest):
+    check_db_ready()
+    username = data.username.strip()
+    email = data.email.strip().lower()
+    rol = data.rol.strip().lower()
+    
+    if rol not in VALID_ROLES:
+        raise HTTPException(status_code=400, detail=f"Rol no válido. Permitidos: {', '.join(VALID_ROLES)}")
+        
+    # Validar duplicados
+    if query_one("SELECT id FROM usuarios WHERE LOWER(username) = LOWER(?)", (username,)):
+        raise HTTPException(status_code=400, detail="El nombre de usuario ya está registrado.")
+    if query_one("SELECT id FROM usuarios WHERE LOWER(email) = LOWER(?)", (email,)):
+        raise HTTPException(status_code=400, detail="El correo electrónico ya está registrado.")
+        
+    pwd_hash, salt = hash_password_sha256(data.password)
+    verificado_int = 1 if data.verificado else 0
+    
+    user_id = execute_query("""
+        INSERT INTO usuarios (username, email, password_hash, salt, nombre_completo, rol, verificado)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (username, email, pwd_hash, salt, data.nombre_completo.strip(), rol, verificado_int))
+    
+    return {
+        "status": "success",
+        "message": f"Usuario '{username}' creado exitosamente por el Administrador.",
+        "user": {
+            "id": user_id,
+            "username": username,
+            "email": email,
+            "nombre_completo": data.nombre_completo,
+            "rol": rol,
+            "verificado": verificado_int
+        }
+    }
+
+@app.put("/api/admin/users/{user_id}/role")
+def admin_update_user_role(user_id: int, data: AdminUpdateRoleRequest):
+    check_db_ready()
+    rol = data.rol.strip().lower()
+    if rol not in VALID_ROLES:
+        raise HTTPException(status_code=400, detail=f"Rol no válido. Permitidos: {', '.join(VALID_ROLES)}")
+        
+    user = query_one("SELECT id, username, rol FROM usuarios WHERE id = ?", (user_id,))
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+        
+    # Impedir quitar el rol de administrador si es el único administrador del sistema
+    if user["rol"] == "administrador" and rol != "administrador":
+        admin_count = query_one("SELECT COUNT(*) as cnt FROM usuarios WHERE rol = 'administrador'")["cnt"]
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="No es posible degradar al único administrador del sistema.")
+            
+    execute_query("UPDATE usuarios SET rol = ? WHERE id = ?", (rol, user_id))
+    
+    return {
+        "status": "success",
+        "message": f"Rol del usuario '{user['username']}' actualizado a '{rol}'.",
+        "user_id": user_id,
+        "new_role": rol
+    }
+
+@app.delete("/api/admin/users/{user_id}")
+def admin_delete_user(user_id: int, current_user_id: Optional[int] = Query(None)):
+    check_db_ready()
+    user = query_one("SELECT id, username, rol FROM usuarios WHERE id = ?", (user_id,))
+    if not user:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado.")
+        
+    # Seguridad: no permitir auto-eliminación
+    if current_user_id and user_id == current_user_id:
+        raise HTTPException(status_code=400, detail="No puedes eliminar tu propia cuenta de administrador en sesión.")
+        
+    # No permitir eliminar al último administrador del sistema
+    if user["rol"] == "administrador":
+        admin_count = query_one("SELECT COUNT(*) as cnt FROM usuarios WHERE rol = 'administrador'")["cnt"]
+        if admin_count <= 1:
+            raise HTTPException(status_code=400, detail="No es posible eliminar al único administrador del sistema.")
+            
+    execute_query("DELETE FROM usuarios WHERE id = ?", (user_id,))
+    
+    return {
+        "status": "success",
+        "message": f"Usuario '{user['username']}' eliminado definitivamente de la base de datos."
+    }
+
 
 # -------------------------------------------------------------
 # 2. RESOLUTOR DE IMÁGENES / API WIKIPEDIA & JURASSIC PARK
