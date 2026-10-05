@@ -892,13 +892,33 @@ def get_chart_top_mascotas():
 STATIC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "static")
 INDEX_FILE = os.path.join(STATIC_DIR, "index.html")
 
+@app.on_event("startup")
+def on_startup():
+    # Si la base de datos está inicializada pero faltan imágenes, sincronizar en segundo plano
+    if is_db_initialized():
+        try:
+            missing = query_one("SELECT COUNT(*) as cnt FROM dinosaurios WHERE imagen_url IS NULL OR imagen_url = ''")
+            if missing and missing.get("cnt", 0) > 0:
+                print(f"[STARTUP] Se detectaron {missing['cnt']} dinosaurios sin imagen. Sincronizando en segundo plano...")
+                import threading
+                threading.Thread(target=sync_wikipedia_images, daemon=True).start()
+        except Exception as e:
+            print(f"[STARTUP] Aviso: no se pudo verificar imágenes: {e}")
+
 if os.path.exists(STATIC_DIR):
     app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 def serve_index():
     if os.path.exists(INDEX_FILE):
-        return FileResponse(INDEX_FILE)
+        return FileResponse(
+            INDEX_FILE,
+            headers={
+                "Cache-Control": "no-cache, no-store, must-revalidate",
+                "Pragma": "no-cache",
+                "Expires": "0"
+            }
+        )
     return {"message": "DinoMascota Backend API activo. Visite /docs para Swagger UI."}
 
 if __name__ == "__main__":

@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>DinoMascota - Tablero de Control Paleontológico | UAI</title>
   
   <!-- Tailwind CSS CDN -->
@@ -2662,15 +2665,32 @@
     // COMPONENTE RAÍZ
     // =========================================================================
     function App() {
-      const [user, setUser] = useState(null);
+      const [user, setUser] = useState(() => {
+        try {
+          const saved = localStorage.getItem('dinomascota_user');
+          if (saved) {
+            setTimeout(initCharts, 300);
+            return JSON.parse(saved);
+          }
+        } catch (e) {}
+        return null;
+      });
 
       const handleLoginSuccess = (userData, token) => {
         setUser(userData);
+        try {
+          localStorage.setItem('dinomascota_user', JSON.stringify(userData));
+          if (token) localStorage.setItem('dinomascota_token', token);
+        } catch (e) {}
         setTimeout(initCharts, 300);
       };
 
       const handleLogout = () => {
         setUser(null);
+        try {
+          localStorage.removeItem('dinomascota_user');
+          localStorage.removeItem('dinomascota_token');
+        } catch (e) {}
       };
 
       if (!user) {
