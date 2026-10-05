@@ -60,7 +60,7 @@
     // =========================================================================
     // COMPONENTE: IMAGEN DE DINOSAURIO (CON FALLBACK ELEGANTE A EMOJI)
     // =========================================================================
-    function DinoImage({ src, emoji = '🦖', alt = 'Dinosaurio', className = 'w-full h-40', imgClassName = 'object-cover' }) {
+    function DinoImage({ src, emoji = '🦖', alt = 'Dinosaurio', className = 'w-full h-48', imgClassName = '' }) {
       const [imgSrc, setImgSrc] = useState(src);
       const [hasError, setHasError] = useState(false);
       const [loading, setLoading] = useState(true);
@@ -72,10 +72,10 @@
       }, [src]);
 
       return (
-        <div className={`relative overflow-hidden rounded-xl bg-slate-900/90 flex items-center justify-center border border-slate-800 ${className}`}>
+        <div className={`relative overflow-hidden rounded-xl bg-slate-950/80 flex items-center justify-center border border-slate-800/80 ${className}`}>
           {loading && !hasError && imgSrc && (
-            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/80 z-10">
-              <i className="fa-solid fa-circle-notch fa-spin text-slate-600 text-lg"></i>
+            <div className="absolute inset-0 flex items-center justify-center bg-slate-900/60 z-10 backdrop-blur-sm">
+              <i className="fa-solid fa-circle-notch fa-spin text-slate-500 text-lg"></i>
             </div>
           )}
 
@@ -83,7 +83,7 @@
             <img
               src={imgSrc}
               alt={alt}
-              className={`w-full h-full transition duration-300 hover:scale-105 ${imgClassName}`}
+              className={`max-w-full max-h-full object-contain p-2 transition-transform duration-300 hover:scale-105 drop-shadow-[0_8px_20px_rgba(0,0,0,0.7)] ${imgClassName}`}
               onLoad={() => setLoading(false)}
               onError={() => {
                 setHasError(true);
@@ -838,43 +838,49 @@
               </div>
             ) : (
               <div>
-                {/* Header Modal con Imagen */}
-                <div className="relative h-56 bg-slate-900 overflow-hidden border-b border-slate-800">
-                  <DinoImage
-                    src={dino.imagen_url}
-                    emoji={dino.imagen_emoji}
-                    alt={dino.nombre}
-                    className="w-full h-full rounded-none border-none"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent flex items-end p-5">
-                    <div className="w-full flex justify-between items-end">
-                      <div>
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase">
-                            {dino.periodo_nombre}
-                          </span>
-                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800/80 text-slate-300 border border-slate-700">
-                            {dino.habitat_nombre}
-                          </span>
-                        </div>
-                        <h2 className="text-2xl font-black text-white drop-shadow-md">{dino.nombre}</h2>
-                        <p className="text-xs italic text-slate-300 drop-shadow-sm">{dino.especie}</p>
-                      </div>
-                      <div>
-                        <SemaforoBadge score={dino.indice_mascotabilidad} size="lg" />
-                      </div>
+                {/* 1. Header Superior del Modal (Identificación y Cierre) */}
+                <div className="p-5 bg-slate-900/95 border-b border-slate-800 flex items-center justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 uppercase tracking-wide">
+                        {dino.periodo_nombre}
+                      </span>
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-md bg-slate-800 text-slate-300 border border-slate-700">
+                        {dino.habitat_nombre}
+                      </span>
                     </div>
+                    <h2 className="text-2xl font-black text-white tracking-tight">{dino.nombre}</h2>
+                    <p className="text-xs italic text-slate-400">{dino.especie}</p>
                   </div>
-                  <button
-                    onClick={onClose}
-                    className="absolute top-3 right-3 text-slate-400 hover:text-white p-2 rounded-xl bg-slate-950/70 hover:bg-slate-900 border border-slate-700 transition cursor-pointer z-20"
-                  >
-                    <i className="fa-solid fa-xmark text-base"></i>
-                  </button>
+                  <div className="flex items-center gap-3">
+                    <SemaforoBadge score={dino.indice_mascotabilidad} size="lg" />
+                    <button
+                      onClick={onClose}
+                      className="text-slate-400 hover:text-white p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700 transition cursor-pointer"
+                      title="Cerrar Ficha"
+                    >
+                      <i className="fa-solid fa-xmark text-base"></i>
+                    </button>
+                  </div>
                 </div>
 
-                {/* Body Modal */}
-                <div className="p-6 space-y-5 max-h-[65vh] overflow-y-auto custom-scroll">
+                {/* 2. Body Modal */}
+                <div className="p-6 space-y-5 max-h-[68vh] overflow-y-auto custom-scroll">
+                  {/* Exhibidor Visual Completo de la Especie (Sin recortes ni solapamientos) */}
+                  <div className="relative w-full h-72 sm:h-80 bg-gradient-to-b from-slate-950 via-slate-900/90 to-slate-950 rounded-2xl overflow-hidden border border-slate-800/80 flex items-center justify-center p-4 group shadow-inner">
+                    <DinoImage
+                      src={dino.imagen_url}
+                      emoji={dino.imagen_emoji}
+                      alt={dino.nombre}
+                      className="w-full h-full bg-transparent border-none rounded-none"
+                      imgClassName="object-contain max-h-full max-w-full drop-shadow-[0_14px_30px_rgba(0,0,0,0.85)] group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div className="absolute bottom-2.5 right-2.5 bg-black/60 backdrop-blur-sm px-2.5 py-1 rounded-lg text-[10px] text-slate-400 border border-slate-800 flex items-center gap-1.5 pointer-events-none">
+                      <i className="fa-solid fa-expand text-emerald-400"></i>
+                      <span>Visualización Completa</span>
+                    </div>
+                  </div>
+
                   {/* Veredicto de Adopción */}
                   <div className={`p-4 rounded-xl border ${
                     dino.semaforo_color === 'VERDE' ? 'bg-emerald-950/40 border-emerald-500/30 text-emerald-300' :
@@ -1191,7 +1197,8 @@
                         src={d.imagen_url}
                         emoji={d.imagen_emoji}
                         alt={d.nombre}
-                        className="w-full h-44"
+                        className="w-full h-52 sm:h-56 bg-gradient-to-b from-slate-900/90 via-slate-950 to-slate-950"
+                        imgClassName="object-contain p-2.5 drop-shadow-[0_8px_16px_rgba(0,0,0,0.7)]"
                       />
                       <div className="absolute top-2.5 right-2.5 z-20">
                         <SemaforoBadge score={d.indice_mascotabilidad} showLabel={false} />
@@ -1373,7 +1380,8 @@
                       src={comparison.dino1.imagen_url}
                       emoji={comparison.dino1.imagen_emoji}
                       alt={comparison.dino1.nombre}
-                      className="w-full h-52"
+                      className="w-full h-60 sm:h-64 bg-gradient-to-b from-slate-900/90 via-slate-950 to-slate-950"
+                      imgClassName="object-contain p-3 drop-shadow-[0_12px_24px_rgba(0,0,0,0.8)]"
                     />
                     <div className="absolute top-3 right-3 z-20">
                       <SemaforoBadge score={comparison.dino1.indice_mascotabilidad} size="lg" />
@@ -1412,7 +1420,8 @@
                       src={comparison.dino2.imagen_url}
                       emoji={comparison.dino2.imagen_emoji}
                       alt={comparison.dino2.nombre}
-                      className="w-full h-52"
+                      className="w-full h-60 sm:h-64 bg-gradient-to-b from-slate-900/90 via-slate-950 to-slate-950"
+                      imgClassName="object-contain p-3 drop-shadow-[0_12px_24px_rgba(0,0,0,0.8)]"
                     />
                     <div className="absolute top-3 right-3 z-20">
                       <SemaforoBadge score={comparison.dino2.indice_mascotabilidad} size="lg" />
@@ -2477,7 +2486,8 @@
                                   src={d.imagen_url}
                                   emoji={d.imagen_emoji}
                                   alt={d.nombre}
-                                  className="w-full h-44"
+                                  className="w-full h-52 sm:h-56 bg-gradient-to-b from-slate-900/90 via-slate-950 to-slate-950"
+                                  imgClassName="object-contain p-2.5 drop-shadow-[0_8px_16px_rgba(0,0,0,0.7)]"
                                 />
                                 <div className="absolute top-2.5 right-2.5 z-20">
                                   <SemaforoBadge score={d.indice_mascotabilidad} showLabel={false} />

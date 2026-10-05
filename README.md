@@ -72,11 +72,11 @@ python -m uvicorn backend.app:app --reload --port 8000
 
 ---
 
-## 🏛️ Estructura del Repositorio
-
+## 🏛️ Estructura del Proyecto
 ```
 Mascoteabilidad-de-dinosaurios/
 ├── init_database.py           # Script independiente de inicialización de SQLite (DDL + DML)
+├── iniciar.bat                # Lanzador automático con doble clic para Windows
 ├── backend/
 │   ├── app.py                 # Backend FastAPI con endpoints SQL, Auth y Admin
 │   ├── database/
@@ -90,5 +90,11 @@ Mascoteabilidad-de-dinosaurios/
 │   ├── static/
 │   │   └── index.html         # Frontend SPA React 18 integrado (Tailwind CSS + Chart.js)
 │   └── requirements.txt       # Dependencias del proyecto
+├── frontend/                  # Código fuente React modular
+│   ├── src/
+│   │   └── services/api.js
+│   ├── package.json
+│   ├── vite.config.js
+│   └── tailwind.config.js
 └── README.md
 ```

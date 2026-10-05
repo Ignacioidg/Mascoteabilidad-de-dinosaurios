@@ -1,6 +1,0 @@
-{
-  "summary": "Plan de implementación para el proyecto DinoMascota Dashboard (Bases de Datos Aplicada - UAI). Incluye el diseño del modelo canónico, scripts SQL DDL/DML, sistema de autenticación con bcrypt y tablero de control interactivo con Drill-Down/Up y Semaforización.",
-  "updatedAt": "2026-08-24T12:37:47.332873100Z",
-  "requestFeedback": true,
-  "userFacing": true
-}
