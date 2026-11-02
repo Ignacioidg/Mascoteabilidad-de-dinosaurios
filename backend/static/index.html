@@ -44,9 +44,66 @@
     }
   </script>
   <style>
-    body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #0f172a; color: #f8fafc; }
-    .glass-card { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.08); }
-    .glass-card-hover:hover { transform: translateY(-4px); transition: all 0.25s ease; border-color: rgba(34, 197, 94, 0.4); }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #0f172a;
+      background-image:
+        radial-gradient(at 15% 10%, rgba(16, 185, 129, 0.07) 0px, transparent 45%),
+        radial-gradient(at 85% 20%, rgba(6, 182, 212, 0.06) 0px, transparent 45%),
+        radial-gradient(at 50% 90%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
+      background-attachment: fixed;
+      color: #f8fafc;
+    }
+    .glass-card {
+      background: rgba(30, 41, 59, 0.68);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.28s ease, box-shadow 0.28s ease;
+    }
+    .glass-card-hover:hover {
+      transform: translateY(-4px);
+      border-color: rgba(34, 197, 94, 0.45);
+      box-shadow: 0 14px 30px -10px rgba(16, 185, 129, 0.18), 0 0 18px -4px rgba(34, 197, 94, 0.15);
+    }
+    .glow-verde:hover {
+      transform: translateY(-5px);
+      border-color: rgba(16, 185, 129, 0.55) !important;
+      box-shadow: 0 16px 32px -10px rgba(16, 185, 129, 0.25), 0 0 20px -4px rgba(16, 185, 129, 0.22);
+    }
+    .glow-amarillo:hover {
+      transform: translateY(-5px);
+      border-color: rgba(245, 158, 11, 0.55) !important;
+      box-shadow: 0 16px 32px -10px rgba(245, 158, 11, 0.22), 0 0 20px -4px rgba(245, 158, 11, 0.2);
+    }
+    .glow-rojo:hover {
+      transform: translateY(-5px);
+      border-color: rgba(239, 68, 68, 0.55) !important;
+      box-shadow: 0 16px 32px -10px rgba(239, 68, 68, 0.25), 0 0 20px -4px rgba(239, 68, 68, 0.22);
+    }
+    @keyframes fadeSlideUp {
+      0% { opacity: 0; transform: translateY(14px) scale(0.985); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes modalSpring {
+      0% { opacity: 0; transform: translateY(16px) scale(0.95); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes barGrow {
+      0% { width: 0%; }
+    }
+    .stagger-item {
+      opacity: 0;
+      animation: fadeSlideUp 0.42s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .modal-spring {
+      animation: modalSpring 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .bar-fill {
+      animation: barGrow 0.75s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .btn-press:active {
+      transform: scale(0.97);
+    }
     .custom-scroll::-webkit-scrollbar { width: 6px; }
     .custom-scroll::-webkit-scrollbar-track { background: #1e293b; }
     .custom-scroll::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
@@ -760,12 +817,41 @@
       }
 
       return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${colorClass}`}>
+        <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border shadow-sm ${colorClass}`}>
           <span className={`w-2 h-2 rounded-full ${dotColor} animate-pulse`}></span>
           <span>{score}/100</span>
           {showLabel && <span className="text-[10px] opacity-80 ml-1">({label.split('•')[0].trim()})</span>}
         </span>
       );
+    }
+
+    function getSemaforoGlowClass(score) {
+      if (score >= 70) return 'glow-verde';
+      if (score >= 40) return 'glow-amarillo';
+      return 'glow-rojo';
+    }
+
+    function AnimatedNumber({ value, decimals = 0, duration = 650 }) {
+      const [display, setDisplay] = useState(0);
+      useEffect(() => {
+        const target = Number(value) || 0;
+        let startTime = null;
+        let rafId = null;
+        const step = (timestamp) => {
+          if (!startTime) startTime = timestamp;
+          const progress = Math.min((timestamp - startTime) / duration, 1);
+          const eased = 1 - Math.pow(1 - progress, 4);
+          setDisplay(target * eased);
+          if (progress < 1) {
+            rafId = requestAnimationFrame(step);
+          } else {
+            setDisplay(target);
+          }
+        };
+        rafId = requestAnimationFrame(step);
+        return () => { if (rafId) cancelAnimationFrame(rafId); };
+      }, [value, duration]);
+      return <>{decimals > 0 ? display.toFixed(decimals) : Math.round(display)}</>;
     }
 
     // =========================================================================
@@ -793,8 +879,8 @@
       if (!dinoId) return null;
 
       return (
-        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
-          <div className="glass-card max-w-2xl w-full rounded-2xl border border-slate-700 shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+        <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-md flex items-center justify-center p-4" onClick={onClose}>
+          <div className="glass-card max-w-2xl w-full rounded-2xl border border-slate-700 shadow-2xl overflow-hidden modal-spring" onClick={(e) => e.stopPropagation()}>
             {loading || !dino ? (
               <div className="p-12 text-center text-slate-400">
                 <i className="fa-solid fa-circle-notch fa-spin text-3xl mb-3 text-emerald-500"></i>
@@ -898,15 +984,25 @@
                         <span className="text-slate-400">Velocidad Máx:</span>
                         <span className="font-bold text-white">{dino.velocidad_kmh} km/h</span>
                       </div>
-                      <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-800/80 flex justify-between">
-                        <span className="text-slate-400">Agresividad:</span>
-                        <span className="font-bold text-amber-400">{dino.agresividad_1_10}/10</span>
+                      <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-800/80 space-y-1.5">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Agresividad:</span>
+                          <span className="font-bold text-amber-400">{dino.agresividad_1_10}/10</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-amber-500 to-red-500 rounded-full bar-fill" style={{ width: `${dino.agresividad_1_10 * 10}%` }}></div>
+                        </div>
                       </div>
-                      <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-800/80 flex justify-between">
-                        <span className="text-slate-400">Inteligencia:</span>
-                        <span className="font-bold text-cyan-400">{dino.inteligencia_1_10}/10</span>
+                      <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-800/80 space-y-1.5">
+                        <div className="flex justify-between">
+                          <span className="text-slate-400">Inteligencia:</span>
+                          <span className="font-bold text-cyan-400">{dino.inteligencia_1_10}/10</span>
+                        </div>
+                        <div className="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                          <div className="h-full bg-gradient-to-r from-cyan-500 to-blue-500 rounded-full bar-fill" style={{ width: `${dino.inteligencia_1_10 * 10}%` }}></div>
+                        </div>
                       </div>
-                      <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-800/80 flex justify-between">
+                      <div className="p-2.5 bg-slate-900/40 rounded-lg border border-slate-800/80 flex justify-between items-center">
                         <span className="text-slate-400">Espacio Mínimo:</span>
                         <span className="font-bold text-white">{dino.espacio_requerido_m2.toLocaleString()} m²</span>
                       </div>
@@ -1149,10 +1245,11 @@
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-              {results.map(d => (
+              {results.map((d, idx) => (
                 <div
                   key={d.id_dinosaurio}
-                  className="glass-card glass-card-hover p-4 rounded-2xl border border-slate-800 flex flex-col justify-between overflow-hidden"
+                  style={{ animationDelay: `${Math.min(idx * 35, 350)}ms` }}
+                  className={`glass-card ${getSemaforoGlowClass(d.indice_mascotabilidad)} stagger-item p-4 rounded-2xl border border-slate-800 flex flex-col justify-between overflow-hidden`}
                 >
                   <div>
                     {/* Imagen de la especie */}
@@ -2165,21 +2262,21 @@
                 {/* 1. SECCIÓN KPIS GLOBALES */}
                 {kpis && (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div className="glass-card p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div className="glass-card glass-card-hover stagger-item p-5 rounded-2xl border border-slate-800 flex items-center justify-between" style={{ animationDelay: '0ms' }}>
                       <div>
                         <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Especies Analizadas</span>
-                        <div className="text-3xl font-black text-white mt-1">{kpis.general.total_dinos}</div>
-                        <span className="text-[11px] text-slate-500 mt-1 block">52 Dinosaurios Normalizados</span>
+                        <div className="text-3xl font-black text-white mt-1"><AnimatedNumber value={kpis.general.total_dinos} /></div>
+                        <span className="text-[11px] text-slate-500 mt-1 block">{kpis.general.total_dinos} Dinosaurios Normalizados</span>
                       </div>
                       <div className="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 text-xl">
                         <i className="fa-solid fa-dna"></i>
                       </div>
                     </div>
 
-                    <div className="glass-card p-5 rounded-2xl border border-slate-800 flex items-center justify-between">
+                    <div className="glass-card glass-card-hover stagger-item p-5 rounded-2xl border border-slate-800 flex items-center justify-between" style={{ animationDelay: '60ms' }}>
                       <div>
                         <span className="text-xs text-slate-400 uppercase font-bold tracking-wider">Mascotabilidad Media</span>
-                        <div className="text-3xl font-black text-emerald-400 mt-1">{kpis.general.mascotabilidad_promedio} <span className="text-sm text-slate-400">/ 100</span></div>
+                        <div className="text-3xl font-black text-emerald-400 mt-1"><AnimatedNumber value={kpis.general.mascotabilidad_promedio} decimals={1} /> <span className="text-sm text-slate-400">/ 100</span></div>
                         <span className="text-[11px] text-slate-500 mt-1 block">Promedio general de la BD</span>
                       </div>
                       <div className="w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 text-xl">
@@ -2189,7 +2286,8 @@
 
                     <div
                       onClick={() => setSelectedDinoId(kpis.mejor_candidato.id_dinosaurio)}
-                      className="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 flex items-center justify-between cursor-pointer"
+                      style={{ animationDelay: '120ms' }}
+                      className="glass-card glow-verde stagger-item p-5 rounded-2xl border border-slate-800 flex items-center justify-between cursor-pointer"
                     >
                       <div className="pr-2">
                         <span className="text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1.5">
@@ -2210,7 +2308,8 @@
 
                     <div
                       onClick={() => setSelectedDinoId(kpis.mayor_riesgo.id_dinosaurio)}
-                      className="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 flex items-center justify-between cursor-pointer"
+                      style={{ animationDelay: '180ms' }}
+                      className="glass-card glow-rojo stagger-item p-5 rounded-2xl border border-slate-800 flex items-center justify-between cursor-pointer"
                     >
                       <div className="pr-2">
                         <span className="text-xs text-slate-400 uppercase font-bold tracking-wider flex items-center gap-1.5">
@@ -2332,11 +2431,12 @@
                         <p className="text-xs text-slate-400">Consulta SQL agrupada por Era y Período histórico.</p>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {periodos.map(p => (
+                        {periodos.map((p, idx) => (
                           <div
                             key={p.id_periodo}
                             onClick={() => handleSelectPeriodo(p)}
-                            className="glass-card glass-card-hover p-6 rounded-2xl border border-slate-800 cursor-pointer flex flex-col justify-between"
+                            style={{ animationDelay: `${idx * 65}ms` }}
+                            className="glass-card glass-card-hover stagger-item p-6 rounded-2xl border border-slate-800 cursor-pointer flex flex-col justify-between"
                           >
                             <div>
                               <div className="flex justify-between items-start mb-3">
@@ -2385,11 +2485,12 @@
                         <p className="text-xs text-slate-400">Selecciona un hábitat para visualizar las especies asociadas en esta era.</p>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {habitatsData.habitats.map(h => (
+                        {habitatsData.habitats.map((h, idx) => (
                           <div
                             key={h.id_habitat}
                             onClick={() => handleSelectHabitat(h)}
-                            className="glass-card glass-card-hover p-5 rounded-2xl border border-slate-800 cursor-pointer flex flex-col justify-between"
+                            style={{ animationDelay: `${idx * 55}ms` }}
+                            className="glass-card glass-card-hover stagger-item p-5 rounded-2xl border border-slate-800 cursor-pointer flex flex-col justify-between"
                           >
                             <div>
                               <div className="flex justify-between items-center mb-2">
@@ -2438,10 +2539,11 @@
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                        {dinosData.dinosaurios.map(d => (
+                        {dinosData.dinosaurios.map((d, idx) => (
                           <div
                             key={d.id_dinosaurio}
-                            className="glass-card glass-card-hover p-4 rounded-2xl border border-slate-800 flex flex-col justify-between overflow-hidden"
+                            style={{ animationDelay: `${Math.min(idx * 45, 360)}ms` }}
+                            className={`glass-card ${getSemaforoGlowClass(d.indice_mascotabilidad)} stagger-item p-4 rounded-2xl border border-slate-800 flex flex-col justify-between overflow-hidden`}
                           >
                             <div>
                               {/* Imagen y Badge */}
@@ -2507,7 +2609,7 @@
                       <i className="fa-solid fa-pie-chart text-emerald-400"></i>
                       <span>Distribución por Tipo de Dieta (Entidad 3)</span>
                     </h3>
-                    <p className="text-xs text-slate-400 mb-4">Cantidad de especies según su régimen alimenticio (52 especies).</p>
+                    <p className="text-xs text-slate-400 mb-4">Cantidad de especies según su régimen alimenticio ({allDinos.length || 64} especies).</p>
                     <div className="h-64 relative flex items-center justify-center">
                       <canvas id="dietasChart"></canvas>
                     </div>
