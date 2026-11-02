@@ -81,7 +81,7 @@ Mascoteabilidad-de-dinosaurios/
 │   ├── app.py                 # Backend FastAPI con endpoints SQL, Auth y Admin
 │   ├── database/
 │   │   ├── schema.sql         # DDL: Definición de tablas, índices y llaves foráneas
-│   │   ├── seeds.sql          # DML: Datos iniciales con 52 especies y usuarios
+│   │   ├── seeds.sql          # DML: Datos iniciales con 64 especies y usuarios
 │   │   ├── dinomascota.db     # Base de datos SQLite creada y operativa
 │   │   └── db.py              # Módulo de conexión SQLite pura y utilitarios
 │   ├── services/

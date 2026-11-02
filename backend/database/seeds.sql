@@ -33,14 +33,14 @@ INSERT INTO dietas (id_dieta, tipo, consumo_diario_kg, costo_mensual_usd, nivel_
 (4, 'Insectívoro / Frugívoro', 1.5, 90.00, 'Bajo'),
 (5, 'Omnívoro Adaptable', 8.0, 280.00, 'Medio');
 
--- 5. Dinosaurios (52 especies completas con URLs de imágenes Wikimedia y datos analíticos)
+-- 5. Dinosaurios (64 especies completas con URLs de imágenes verificadas y datos analíticos)
 INSERT INTO dinosaurios (
     nombre, especie, altura_m, longitud_m, peso_kg, velocidad_kmh, agresividad_1_10, 
     inteligencia_1_10, esperanza_vida_anios, espacio_requerido_m2, indice_mascotabilidad, 
     id_periodo, id_habitat, id_dieta, imagen_emoji, imagen_url, observaciones
 ) VALUES
 -- =========================================================================
--- TRIÁSICO (id_periodo = 1) - 14 Especies
+-- TRIÁSICO (id_periodo = 1) - 17 Especies
 -- =========================================================================
 ('Herrerasaurus', 'Herrerasaurus ischigualastensis', 1.5, 3.0, 250.0, 40.0, 8, 5, 20, 300, 22, 1, 5, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/6/67/Herrerasaurus_use_V2.webp/revision/latest/scale-to-width-down/800?cb=20250615193754', 'Uno de los primeros carnívoros; temperamento impredecible y mordida fuerte.'),
 ('Eoraptor', 'Eoraptor lunensis', 0.4, 1.0, 10.0, 35.0, 3, 6, 12, 40, 82, 1, 1, 5, '🦎', 'https://static.wikia.nocookie.net/jurassicpark/images/2/23/JPI_Eoraptor.png/revision/latest?cb=20200807195328', 'Tamaño de un perro faldero; adaptable, come semillas e insectos, excelente mascota de jardín.'),
@@ -56,9 +56,12 @@ INSERT INTO dinosaurios (
 ('Chindesaurus', 'Chindesaurus bryansmalli', 1.0, 2.4, 50.0, 40.0, 7, 6, 16, 180, 41, 1, 5, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/a/a5/JPI_Chindesaurus.png/revision/latest/scale-to-width-down/800?cb=20250727200323', 'Cazador solitario del desierto triásico; territorial y desconfiado con extraños.'),
 ('Liliensternus', 'Liliensternus liliensterni', 2.0, 5.1, 130.0, 45.0, 8, 6, 20, 350, 28, 1, 6, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/a/a9/JPI_Liliensternus.png/revision/latest?cb=20200811173423', 'Therópodo estilizado de gran agilidad; mordida rápida y caza nocturna.'),
 ('Gojirasaurus', 'Gojirasaurus quayi', 2.2, 5.5, 200.0, 38.0, 8, 5, 22, 450, 21, 1, 4, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/6/6d/JPI_Gojirasaurus.webp/revision/latest/scale-to-width-down/800?cb=20260911211854', 'Nombrado en honor a Godzilla; depredador costero de gran apetito y fuerte rugido.'),
+('Procompsognathus', 'Procompsognathus triassicus', 0.3, 1.0, 1.5, 42.0, 3, 6, 12, 20, 86, 1, 1, 4, '🦎', 'https://static.wikia.nocookie.net/jurassicpark/images/8/89/JPI_Procompsognathus.png/revision/latest?cb=20200826064323', 'Ágil cazador de insectos y lagartijas; tamaño ideal para convivir en un patio con césped.'),
+('Coloradisaurus', 'Coloradisaurus brevis', 1.8, 4.0, 220.0, 24.0, 2, 4, 28, 300, 67, 1, 6, 1, '🦕', 'https://static.wikia.nocookie.net/jurassicpark/images/9/9c/Coloradisaurus.webp/revision/latest?cb=20220602020419', 'Prosaurópodo argentino de La Rioja; pacífico, come helechos y convive bien con otros herbívoros.'),
+('Unaysaurus', 'Unaysaurus tolentinoi', 0.8, 2.5, 70.0, 28.0, 2, 5, 22, 120, 74, 1, 6, 1, '🦕', 'https://static.wikia.nocookie.net/jurassicpark/images/2/21/Unaysaurus_big.webp/revision/latest?cb=20220531232916', 'Herbívoro bípedo sudamericano de porte mediano; dócil, curioso y de fácil mantenimiento.'),
 
 -- =========================================================================
--- JURÁSICO (id_periodo = 2) - 18 Especies
+-- JURÁSICO (id_periodo = 2) - 22 Especies
 -- =========================================================================
 ('Brachiosaurus', 'Brachiosaurus altithorax', 13.0, 26.0, 35000.0, 15.0, 1, 2, 80, 5000, 18, 2, 2, 1, '🦕', 'https://static.wikia.nocookie.net/jurassicpark/images/0/00/JWFKBrachiosaurusRender.png/revision/latest?cb=20180427201052', 'Sumamente pacífico, pero comerá toda la arboleda vecinal y bloqueará el tráfico.'),
 ('Dilophosaurus', 'Dilophosaurus wetherilli', 2.0, 7.0, 400.0, 38.0, 8, 7, 25, 450, 20, 2, 1, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/a/a7/Dilophosaurus_Open_Frills.png/revision/latest/scale-to-width-down/800?cb=20240214114411', 'Territorial y cazador veloz; no escupe veneno real pero muerde severamente.'),
@@ -78,9 +81,13 @@ INSERT INTO dinosaurios (
 ('Torvosaurus', 'Torvosaurus tanneri', 3.5, 10.0, 3000.0, 30.0, 9, 7, 28, 1500, 7, 2, 6, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/d/de/JPI_Torvosaurus.png/revision/latest?cb=20200806225926', 'Depredador gigante con brazos musculosos; incompatible con cualquier hogar.'),
 ('Mamenchisaurus', 'Mamenchisaurus constructus', 6.0, 26.0, 25000.0, 12.0, 1, 2, 75, 4500, 19, 2, 2, 1, '🦕', 'https://static.wikia.nocookie.net/jurassicpark/images/9/9f/Jurassic_park_mamenchisaurus_render_1_by_tsilvadino_de76dfk-pre.png/revision/latest/scale-to-width-down/800?cb=20210529023603', 'Posee el cuello más largo de la historia; mirará a través del balcón de un cuarto piso.'),
 ('Yi qi', 'Yi qi', 0.25, 0.4, 0.4, 32.0, 1, 7, 10, 15, 96, 2, 1, 4, '🦇', 'https://thumb.wikimedia.org/wikipedia/commons/thumb/0/0a/Yi_qi_fossil.jpg/330px-Yi_qi_fossil.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail', 'Increíble dinosaurio con alas membranosas de murciélago; vuela por la habitación y come polillas.'),
+('Metriacanthosaurus', 'Metriacanthosaurus parkeri', 2.6, 8.0, 1000.0, 38.0, 8, 7, 25, 700, 16, 2, 1, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/9/93/Metriacanthosaurus-detail-header.png/revision/latest/scale-to-width-down/800?cb=20150227002518', 'Depredador jurásico de lomo colorido; sigiloso y demasiado peligroso para entornos residenciales.'),
+('Monolophosaurus', 'Monolophosaurus jiangi', 2.0, 5.5, 475.0, 36.0, 8, 6, 24, 500, 21, 2, 6, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/c/cb/Monolophosaurus_Render.png/revision/latest/scale-to-width-down/800?cb=20260415153430', 'Caracterizado por su cresta única nasal; territorial cerca de piscinas y estanques.'),
+('Sinraptor', 'Sinraptor dongi', 2.8, 7.6, 1100.0, 37.0, 9, 7, 26, 850, 13, 2, 2, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/7/7e/JPI_Sinraptor.png/revision/latest/scale-to-width-down/800?cb=20250614113848', 'Feroz cazador asiático de gran porte; requiere cerramiento de alta seguridad.'),
+('Othnielia', 'Othnielia rex', 0.7, 1.8, 12.0, 44.0, 1, 6, 15, 45, 85, 2, 1, 1, '🦌', 'https://static.wikia.nocookie.net/jurassicpark/images/1/18/JPI_Othnielia.png/revision/latest?cb=20200820234111', 'Pequeño herbívoro corredor parecido a un ciervo diminuto; muy manso, limpio y afectuoso.'),
 
 -- =========================================================================
--- CRETÁCICO (id_periodo = 3) - 20 Especies
+-- CRETÁCICO (id_periodo = 3) - 25 Especies
 -- =========================================================================
 ('Tyrannosaurus rex', 'Tyrannosaurus rex', 4.0, 12.5, 8500.0, 27.0, 10, 8, 30, 3500, 6, 3, 2, 2, '🦖', 'https://static.wikia.nocookie.net/jurassicpark/images/0/02/Ember_new_render.png/revision/latest/scale-to-width-down/800?cb=20251006213308', 'El rey indiscutido; fuerza de mordida demoledora, incompatible con la vida urbana.'),
 ('Triceratops', 'Triceratops horridus', 3.0, 8.5, 7000.0, 32.0, 5, 4, 40, 2000, 45, 3, 2, 1, '🦏', 'https://static.wikia.nocookie.net/jurassicpark/images/5/52/Jurassic_world_fallen_kingdom_triceratops_by_sonichedgehog2-dc9dwcu.png/revision/latest?cb=20180427200649', 'Fiel y robusto como un rinoceronte leal; requiere gran patio y cuidado con las embestidas.'),
@@ -101,4 +108,9 @@ INSERT INTO dinosaurios (
 ('Deinonychus', 'Deinonychus antirrhopus', 1.5, 3.4, 75.0, 48.0, 8, 8, 20, 250, 33, 3, 1, 2, '🦅', 'https://static.wikia.nocookie.net/jurassicpark/images/3/38/JPI_Deinonychus.png/revision/latest/scale-to-width-down/800?cb=20250525103834', 'Garra terrible en forma de hoz; ágil, inteligente pero peligroso para personas inexpertas.'),
 ('Maiasaura', 'Maiasaura peeblesorum', 2.8, 9.0, 2500.0, 28.0, 2, 6, 32, 1100, 72, 3, 2, 1, '🤱', 'https://static.wikia.nocookie.net/jurassicpark/images/2/20/JPI_Maiasaura.png/revision/latest?cb=20200815160308', 'La buena madre reptil; extraordinariamente maternal, cuida y protege a los miembros del hogar.'),
 ('Gallimimus', 'Gallimimus bullatus', 2.0, 6.0, 450.0, 60.0, 3, 7, 24, 600, 64, 3, 2, 5, '🦤', 'https://static.wikia.nocookie.net/jurassicpark/images/9/9e/GebaRender.png/revision/latest?cb=20251224164022', 'Parecido a un avestruz gigante; come plantas, huevos y frutas, corre más rápido que un auto.'),
-('Amargasaurus', 'Amargasaurus cazaui', 3.0, 10.0, 2800.0, 20.0, 2, 4, 35, 1000, 62, 3, 6, 1, '🦕', 'https://static.wikia.nocookie.net/jurassicpark/images/0/06/JPI_Amargasaurus.png/revision/latest?cb=20200704053644', 'Doble fila de espinas en el cuello; bello y exótico, se alimenta tranquilamente a la orilla del río.');
+('Amargasaurus', 'Amargasaurus cazaui', 3.0, 10.0, 2800.0, 20.0, 2, 4, 35, 1000, 62, 3, 6, 1, '🦕', 'https://static.wikia.nocookie.net/jurassicpark/images/0/06/JPI_Amargasaurus.png/revision/latest?cb=20200704053644', 'Doble fila de espinas en el cuello; bello y exótico, se alimenta tranquilamente a la orilla del río.'),
+('Stygimoloch', 'Stygimoloch spinifer', 1.2, 2.8, 80.0, 32.0, 5, 5, 20, 180, 55, 3, 1, 1, '🐏', 'https://static.wikia.nocookie.net/jurassicpark/images/e/eb/DXpxouxXUAArogv.png/revision/latest?cb=20180307190144', 'Corona de cuernos espectaculares; juguetón pero propenso a embestir puertas cerradas.'),
+('Corythosaurus', 'Corythosaurus casuarius', 3.0, 9.0, 3800.0, 26.0, 1, 5, 34, 1100, 66, 3, 3, 1, '🎺', 'https://static.wikia.nocookie.net/jurassicpark/images/9/95/CorythoJPIIIimage.png/revision/latest?cb=20191121200543', 'Cresta en forma de casco corintio; sumamente pacífico, le encanta nadar y vocalizar en familia.'),
+('Suchomimus', 'Suchomimus tenerensis', 3.6, 11.0, 3500.0, 28.0, 8, 6, 28, 1500, 17, 3, 3, 3, '🐊', 'https://static.wikia.nocookie.net/jurassicpark/images/5/50/OfficalJWCTSuchoRender.png/revision/latest/scale-to-width-down/800?cb=20241002231735', 'Hocico de cocodrilo gigante especializado en pesca; requiere un lago propio y toneladas de salmón.'),
+('Protoceratops', 'Protoceratops andrewsi', 0.8, 1.8, 150.0, 22.0, 3, 5, 24, 90, 77, 3, 5, 1, '🦏', 'https://static.wikia.nocookie.net/jurassicpark/images/0/0a/JPI_Protoceratops.png/revision/latest?cb=20200826180106', 'Del tamaño de una oveja robusta; guardián leal del jardín, rústico y muy resistente al calor.'),
+('Carcharodontosaurus', 'Carcharodontosaurus saharicus', 4.0, 12.5, 7000.0, 31.0, 10, 7, 29, 3200, 6, 3, 5, 2, '🦈', 'https://static.wikia.nocookie.net/jurassicpark/images/f/f2/JPI_Carcharodontosaurus.png/revision/latest?cb=20200704015356', 'Dientes aserrados como tiburón blanco; coloso africano incompatible con la tenencia doméstica.');
